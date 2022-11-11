@@ -21,4 +21,10 @@ func TestGraph(t *testing.T) {
 	fmt.Println(F)
 	fmt.Println(G)
 	fmt.Println(H)
+
+	visitFunc := func(n AnyNode) {
+		fmt.Println(n)
+	}
+	fmt.Println("Traversing tree via DFS:")
+	A.DepthFirstSearch(visitFunc)
 }

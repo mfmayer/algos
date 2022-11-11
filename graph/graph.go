@@ -5,6 +5,7 @@ import (
 
 	"github.com/mfmayer/algos"
 	"github.com/mfmayer/algos/linkedlist"
+	"github.com/mfmayer/algos/stack"
 )
 
 // AnyLink interface for any link in a graph
@@ -131,3 +132,23 @@ func (n *Node) AddLinksTo(others nodes, options ...func(*linkOptions)) AnyNode {
 	}
 	return n
 }
+
+// DepthFirstSearch calls visitFunc in a DFS (Depth First Search) Manner
+func (n *Node) DepthFirstSearch(visitFunc func(AnyNode)) {
+	stack := stack.NewStack(n)
+	visited := map[AnyNode]struct{}{}
+
+	var next AnyNode
+	for next, _ = stack.Pop().(AnyNode); next != nil; next, _ = stack.Pop().(AnyNode) {
+		if _, alreadyVisited := visited[next]; alreadyVisited {
+			continue
+		}
+		for link := next.Links(); link != nil; link, _ = link.Next().(AnyLink) {
+			stack.Push(link.To())
+		}
+		visitFunc(next)
+		visited[next] = struct{}{}
+	}
+}
+
+// BreadthFirstSearch
