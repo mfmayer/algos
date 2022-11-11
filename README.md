@@ -7,6 +7,7 @@ Module, respectively collection of go packages concerning data structures and re
 Currently implemented are
 
 * Stack
+* Ring Buffer
 * Linked List
 * Graph
 
