@@ -5,6 +5,7 @@ import (
 
 	"github.com/mfmayer/algos"
 	"github.com/mfmayer/algos/linkedlist"
+	"github.com/mfmayer/algos/ringbuffer"
 	"github.com/mfmayer/algos/stack"
 )
 
@@ -152,3 +153,19 @@ func (n *Node) DepthFirstSearch(visitFunc func(AnyNode)) {
 }
 
 // BreadthFirstSearch
+func (n *Node) BreadthFirstSearch(visitFunc func(AnyNode)) {
+	queue := ringbuffer.NewRingBuffer(ringbuffer.WithInitialValues(n))
+	visited := map[AnyNode]struct{}{}
+
+	var next AnyNode
+	for next, _ = queue.Pop().(AnyNode); next != nil; next, _ = queue.Pop().(AnyNode) {
+		if _, alreadyVisited := visited[next]; alreadyVisited {
+			continue
+		}
+		for link := next.Links(); link != nil; link, _ = link.Next().(AnyLink) {
+			queue.Push(link.To())
+		}
+		visitFunc(next)
+		visited[next] = struct{}{}
+	}
+}

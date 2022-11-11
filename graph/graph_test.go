@@ -27,4 +27,7 @@ func TestGraph(t *testing.T) {
 	}
 	fmt.Println("Traversing tree via DFS:")
 	A.DepthFirstSearch(visitFunc)
+
+	fmt.Println("Traversing tree via BFS:")
+	A.BreadthFirstSearch(visitFunc)
 }
