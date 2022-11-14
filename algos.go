@@ -13,22 +13,22 @@ type AnyElement interface {
 
 // Element that contains any value
 type Element struct {
-	value Any
+	Any Any
 }
 
 // NewElemenet creates new element with any value
-func NewElement(value Any) *Element {
+func NewElement(anyValue Any) *Element {
 	return &Element{
-		value: value,
+		Any: anyValue,
 	}
 }
 
 // Value returns element's value
 func (e *Element) Value() Any {
-	return e.value
+	return e.Any
 }
 
 // SetValue sets element's value
 func (e *Element) SetValue(value Any) {
-	e.value = value
+	e.Any = value
 }

@@ -32,7 +32,7 @@ type Link struct {
 // NewLink creates a new link to a node with any value
 func NewLink(to AnyNode, value algos.Any) *Link {
 	link := &Link{
-		Element: linkedlist.NewElement(value),
+		Element: linkedlist.NewElement(value).(*linkedlist.Element),
 		to:      to,
 	}
 	return link
@@ -60,7 +60,7 @@ func (l *Link) To() AnyNode {
 // Node in a graph
 type Node struct {
 	*algos.Element
-	linkList AnyLink
+	links AnyLink
 }
 
 // NewNode creates a new node for a graph
@@ -73,12 +73,12 @@ func NewNode(value algos.Any, linkedNodes ...AnyNode) *Node {
 }
 
 func (n *Node) String() string {
-	return fmt.Sprintf("%v -> %v", n.Value(), n.linkList)
+	return fmt.Sprintf("%v -> %v", n.Value(), n.links)
 }
 
 // Links returns head of node's link list
 func (n *Node) Links() AnyLink {
-	return n.linkList
+	return n.links
 }
 
 type linkOptions struct {
@@ -114,10 +114,10 @@ func (n *Node) AddLinkTo(other AnyNode, options ...func(*linkOptions)) AnyNode {
 		opt(&lo)
 	}
 	link := NewLink(other, lo.linkValue)
-	if n.linkList == nil {
-		n.linkList = link
+	if n.links == nil {
+		n.links = link
 	} else {
-		n.linkList.Append(link)
+		n.links.Append(link)
 	}
 	if lo.bidirectional {
 		other.AddLinkTo(n, WithLinkValue(lo.linkValue))

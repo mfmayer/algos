@@ -6,8 +6,8 @@ Module, respectively collection of go packages concerning data structures and re
 
 Currently implemented are
 
-* Stack
-* Ring Buffer
+* Stack (LIFO)
+* Ring Buffer (FIFO)
 * Linked List
 * Graph
 
