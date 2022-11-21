@@ -1,64 +1,45 @@
 package ringbuffer
 
-import "github.com/mfmayer/algos"
-
 // RinfBugger (FIFO) with any elements
-type RingBuffer struct {
-	buffer          []algos.Any
+type RingBuffer[T any] struct {
+	buffer          []T
 	overwrite       bool
 	nextIn, nextOut int
 }
 
-type settings struct {
-	cap       int
-	overwrite bool
-	initWith  []algos.Any
-}
-
-type option func(*settings)
-
-// WithCapacity option to initialize the rinfbuffer with a specific capacity
-func WithCapacity(cap int) option {
-	return func(s *settings) {
-		s.cap = cap + 1 // the ringbuffer can handle one element less than the underlying slice capacity, therefore +1
+// NewRingBuffer creates and initializes a new ring buffer. The capacity of underlying slice increases dynamically
+func NewRingBuffer[T any](values ...T) *RingBuffer[T] {
+	capacity := len(values)
+	if capacity < 1 {
+		capacity = 1
 	}
-}
-
-// WithInitialValues option to initialize the ringubffer with given values
-func WithInitialValues(values ...algos.Any) option {
-	return func(s *settings) {
-		s.initWith = append(s.initWith, values...)
-	}
-}
-
-// Overwrite option to overwrite values instead of increasing the ring buffers size when more values are inserted
-// than availaable capacity
-func Overwrite() option {
-	return func(s *settings) {
-		s.overwrite = true
-	}
-}
-
-// NewRingBuffer creates and initializes a new ring buffer with given options
-func NewRingBuffer(options ...option) *RingBuffer {
-	s := settings{
-		cap: 8,
-	}
-	for _, opt := range options {
-		opt(&s)
-	}
-	ringBuffer := &RingBuffer{
-		overwrite: s.overwrite,
-		buffer:    make([]algos.Any, s.cap),
+	ringBuffer := &RingBuffer[T]{
+		overwrite: false,
+		buffer:    make([]T, len(values)+1),
 		nextIn:    0,
 		nextOut:   0,
 	}
-	ringBuffer.Push(s.initWith...)
+	ringBuffer.Push(values...)
+	return ringBuffer
+}
+
+// NewRingBufferWithFixedCapacity creates and initialized a new ring buffer with a fixed capacaity. Pushing more values into the buffer than it can store results in dropping first inserted values first.
+func NewRingBufferWithFixedCapacity[T any](capacity int, values ...T) *RingBuffer[T] {
+	if capacity < 1 {
+		capacity = 1
+	}
+	ringBuffer := &RingBuffer[T]{
+		overwrite: true,
+		buffer:    make([]T, capacity+1),
+		nextIn:    0,
+		nextOut:   0,
+	}
+	ringBuffer.Push(values...)
 	return ringBuffer
 }
 
 // normalizedNextInOut normlizes nextIn and nextOut indices so that nextOut is always < nextIn
-func (r *RingBuffer) normalizedNextInOut() (in, out int) {
+func (r *RingBuffer[T]) normalizedNextInOut() (in, out int) {
 	in, out = r.nextIn, r.nextOut
 	for out > in {
 		in = in + len(r.buffer)
@@ -67,13 +48,13 @@ func (r *RingBuffer) normalizedNextInOut() (in, out int) {
 }
 
 // Len returns the number of values in the ring buffer
-func (r *RingBuffer) Len() int {
+func (r *RingBuffer[T]) Len() int {
 	in, out := r.normalizedNextInOut()
 	return in - out
 }
 
 // PeekNextOut to see what value would pop next (without popping it)
-func (r *RingBuffer) PeekNextOut() (value algos.Any) {
+func (r *RingBuffer[T]) PeekNextOut() (value T) {
 	if r.Len() <= 0 {
 		return
 	}
@@ -82,7 +63,7 @@ func (r *RingBuffer) PeekNextOut() (value algos.Any) {
 }
 
 // PeekLastIn to see what value was lastly pushed into the ring buffer
-func (r *RingBuffer) PeekLastIn() (value algos.Any) {
+func (r *RingBuffer[T]) PeekLastIn() (value T) {
 	if r.Len() <= 0 {
 		return
 	}
@@ -95,19 +76,20 @@ func (r *RingBuffer) PeekLastIn() (value algos.Any) {
 }
 
 // Pop next value from ring buffer
-func (r *RingBuffer) Pop() (value algos.Any) {
+func (r *RingBuffer[T]) Pop() (value T) {
 	if r.Len() <= 0 {
 		return
 	}
 	value = r.buffer[r.nextOut]
-	r.buffer[r.nextOut] = nil
+	var empty T
+	r.buffer[r.nextOut] = empty
 	r.nextOut = (r.nextOut + 1) % len(r.buffer)
 	return
 }
 
 // Push values into the ring buffer. If overwrite is enabled and no capacity left oldest calues will be overwritten first.
 // Otherwise the underlying buffer size will be dynamically increased.
-func (r *RingBuffer) Push(values ...algos.Any) {
+func (r *RingBuffer[T]) Push(values ...T) {
 	for _, value := range values {
 		if r.Len() >= len(r.buffer)-1 {
 			// element must be dropped or buffer resized
@@ -116,7 +98,7 @@ func (r *RingBuffer) Push(values ...algos.Any) {
 				r.nextOut = (r.nextOut + 1) % len(r.buffer)
 			} else {
 				// resize underlying buffer
-				buffer := make([]algos.Any, 2*len(r.buffer))
+				buffer := make([]T, 2*len(r.buffer))
 				i := 0
 				for r.Len() > 0 {
 					buffer[i] = r.Pop()

@@ -6,10 +6,10 @@ import (
 )
 
 func TestLinkedList(t *testing.T) {
-	var head AnyElement = NewElement(1, 2, 3, 4, 5)
+	head := NewElement(1, 2, 3, 4, 5)
 	next := head
 	for i := 1; next != nil; i++ {
-		if next.Value().(int) != i {
+		if next.Data != i {
 			t.Fail()
 		}
 		next = next.Next()
@@ -20,8 +20,8 @@ func TestLinkedList(t *testing.T) {
 	next = newHead
 	count := 0
 	for i := 0; next != nil; i++ {
-		fmt.Println(next.Value())
-		if next.Value().(int) != i {
+		fmt.Println(next.Data)
+		if next.Data != i {
 			t.Fail()
 		}
 		next = next.Next()

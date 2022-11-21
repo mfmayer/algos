@@ -1,34 +1,38 @@
 package algos
 
-// Any alias for an empty interface
-type Any interface{}
+import "fmt"
 
-// AnyElement interface
-type AnyElement interface {
-	// Value returns the element's value
-	Value() Any
-	// SetValue sets the element's value
-	SetValue(Any)
+func Empty[T any]() (e T) {
+	return
 }
 
-// Element that contains any value
-type Element struct {
-	Any Any
+type AnyElement interface {
+	fmt.Stringer
+	GetData() any
+	SetData(data any) bool
+}
+
+// Element that contains any data
+type Element[T any] struct {
+	Data T
 }
 
 // NewElemenet creates new element with any value
-func NewElement(anyValue Any) *Element {
-	return &Element{
-		Any: anyValue,
+func NewElement[T any](data T) *Element[T] {
+	return &Element[T]{
+		Data: data,
 	}
 }
 
-// Value returns element's value
-func (e *Element) Value() Any {
-	return e.Any
+func (e *Element[T]) String() string {
+	return fmt.Sprintf("%v", e.GetData())
 }
 
-// SetValue sets element's value
-func (e *Element) SetValue(value Any) {
-	e.Any = value
+func (e *Element[T]) GetData() any {
+	return e.Data
+}
+
+func (e *Element[T]) SetData(data any) (ok bool) {
+	e.Data, ok = data.(T)
+	return
 }

@@ -8,11 +8,11 @@ import (
 func TestGraph(t *testing.T) {
 	// TODO: Implement reasonable test for graph (not only just print the nodes and its links)
 	A, B, C, D, E, F, G, H := NewNode("A"), NewNode("B"), NewNode("C"), NewNode("D"), NewNode("E"), NewNode("F"), NewNode("G"), NewNode("H")
-	A.AddLinksTo(Nodes(B, C, D, E), Bidirectional)
-	F.AddLinksTo(Nodes(E, H, G), Bidirectional)
-	B.AddLinksTo(Nodes(G, C), Bidirectional)
-	D.AddLinksTo(Nodes(C, E), Bidirectional)
-	H.AddLinksTo(Nodes(D), Bidirectional)
+	A.LinkTo(Nodes(B, C), BidirectionalWithCosts(5), Nodes(D, E), BidirectionalWithCosts(2))
+	F.LinkTo(Nodes(E, H, G), BidirectionalWithCosts(1))
+	B.LinkTo(Nodes(G, C), BidirectionalWithCosts(1))
+	D.LinkTo(Nodes(C, E), BidirectionalWithCosts(1))
+	H.LinkTo(Nodes(D), BidirectionalWithCosts(1))
 	fmt.Println(A)
 	fmt.Println(B)
 	fmt.Println(C)
@@ -22,6 +22,7 @@ func TestGraph(t *testing.T) {
 	fmt.Println(G)
 	fmt.Println(H)
 
+	// Traverse the graph
 	visitFunc := func(n AnyNode) {
 		fmt.Println(n)
 	}
