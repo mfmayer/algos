@@ -111,3 +111,43 @@ func (n *Node[T]) BreadthFirstSearch(visitFunc func(*Node[T])) {
 		visited[next] = struct{}{}
 	}
 }
+
+type Route[T any] []Link[T]
+
+func (r Route[T]) TotalCosts() int {
+	totalCosts := 0
+	for _, l := range r {
+		totalCosts = totalCosts + l.Costs()
+	}
+	return totalCosts
+}
+
+func (r Route[T]) LastNode() *Node[T] {
+	return r.LastLink().Node()
+}
+
+func (r Route[T]) LastLink() Link[T] {
+	return r[len(r)-1]
+}
+
+func (n *Node[T]) Dijkstra(destination *Node[T]) (route Route[T]) {
+	heap := heap.NewMinHeap(func(a, b Route[T]) bool { return a.TotalCosts() < b.TotalCosts() }, Route[T]{Link[T]{n, 0}})
+	visited := map[*Node[T]]struct{}{}
+	for route = heap.Pop(); route != nil; route = heap.Pop() {
+		link := route.LastLink()
+		node := link.Node()
+		if _, alreadyVisited := visited[node]; alreadyVisited {
+			continue
+		}
+		if node == destination {
+			return
+		}
+		for _, link := range node.Links() {
+			r := append(Route[T]{}, route...)
+			r = append(r, link)
+			heap.Push(r)
+		}
+		visited[node] = struct{}{}
+	}
+	return
+}

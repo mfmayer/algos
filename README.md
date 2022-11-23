@@ -20,3 +20,4 @@ Currently implemented are
 
 * Depth First Search (DFS) traversal with using Stack structure
 * Breadth First Search (BFS) traversal with using Stack structure
+* Dijkstra Algorithm to find shortes path between two nodes
