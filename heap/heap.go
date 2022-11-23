@@ -1,5 +1,7 @@
 package heap
 
+import "fmt"
+
 type childrenOk int
 
 const (
@@ -24,7 +26,7 @@ func children[T any](parentIdx int, slice []T) (left, right int, ok childrenOk) 
 	return
 }
 
-func biggerChild[T any](parentIdx int, slice []T, less func(a, b *T) bool) (child int, ok bool) {
+func biggerChild[T any](parentIdx int, slice []T, less func(a, b T) bool) (child int, ok bool) {
 	left, right, childrenOK := children(parentIdx, slice)
 	switch childrenOK {
 	case NoneOK:
@@ -35,7 +37,7 @@ func biggerChild[T any](parentIdx int, slice []T, less func(a, b *T) bool) (chil
 		ok = true
 		return
 	case BothOK:
-		if less(&slice[left], &slice[right]) {
+		if less(slice[left], slice[right]) {
 			child = right
 			ok = true
 			return
@@ -49,6 +51,9 @@ func biggerChild[T any](parentIdx int, slice []T, less func(a, b *T) bool) (chil
 }
 
 func parent(child int) (parentIdx int) {
+	if child == 0 {
+		return 0
+	}
 	parentIdx = ((child + 1) / 2) - 1
 	return
 }
@@ -57,9 +62,9 @@ func swap[T any](slice []T, i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-func heapifyNode[T any](nodeIdx int, slice []T, less func(a, b *T) bool) {
+func heapifyNode[T any](nodeIdx int, slice []T, less func(a, b T) bool) {
 	if biggerChild, ok := biggerChild(nodeIdx, slice, less); ok {
-		if less(&slice[nodeIdx], &slice[biggerChild]) {
+		if less(slice[nodeIdx], slice[biggerChild]) {
 			// swap parent with bigger child & heapify downwards
 			swap(slice, nodeIdx, biggerChild)
 			heapifyNode(biggerChild, slice, less)
@@ -68,15 +73,15 @@ func heapifyNode[T any](nodeIdx int, slice []T, less func(a, b *T) bool) {
 }
 
 // Heapify arranges a slice's elements according to a Max Heap
-func Heapify[T any](slice []T, less func(a, b *T) bool) {
+func Heapify[T any](slice []T, less func(a, b T) bool) {
 	for i := len(slice) - 1; i >= 0; i-- {
 		heapifyNode(i, slice, less)
 	}
 }
 
 // HeapifyMin arranges a slice's elements according to a Min Heap
-func HeapifyMin[T any](slice []T, less func(a, b *T) bool) {
-	more := func(a, b *T) bool {
+func HeapifyMin[T any](slice []T, less func(a, b T) bool) {
+	more := func(a, b T) bool {
 		return !less(a, b)
 	}
 	for i := len(slice) - 1; i >= 0; i-- {
@@ -85,7 +90,7 @@ func HeapifyMin[T any](slice []T, less func(a, b *T) bool) {
 }
 
 // HeapSort a slice (ascending order)
-func HeapSort[T any](slice []T, less func(a, b *T) bool) []T {
+func HeapSort[T any](slice []T, less func(a, b T) bool) []T {
 	Heapify(slice, less)
 	sortedSlice := slice
 	for len(slice) > 0 {
@@ -98,8 +103,8 @@ func HeapSort[T any](slice []T, less func(a, b *T) bool) []T {
 }
 
 // HeapSortMin a slice (descending order)
-func HeapSortMin[T any](slice []T, less func(a, b *T) bool) []T {
-	more := func(a, b *T) bool {
+func HeapSortMin[T any](slice []T, less func(a, b T) bool) []T {
+	more := func(a, b T) bool {
 		return !less(a, b)
 	}
 	return HeapSort(slice, more)
@@ -108,11 +113,11 @@ func HeapSortMin[T any](slice []T, less func(a, b *T) bool) []T {
 // Heap can be either a min or a max heap. See NewMaxHeao & NewMinHeap for creating a heap
 type Heap[T any] struct {
 	slice []T
-	less  func(a, b *T) bool
+	less  func(a, b T) bool
 }
 
 // NewMaxHeap creates a new max heap
-func NewMaxHeap[T any](less func(a, b *T) bool, values ...T) *Heap[T] {
+func NewMaxHeap[T any](less func(a, b T) bool, values ...T) *Heap[T] {
 	mh := &Heap[T]{
 		slice: append([]T{}, values...),
 		less:  less,
@@ -122,8 +127,8 @@ func NewMaxHeap[T any](less func(a, b *T) bool, values ...T) *Heap[T] {
 }
 
 // NewMinHeap creates a new min heap
-func NewMinHeap[T any](less func(a, b *T) bool, values ...T) *Heap[T] {
-	comp := func(a, b *T) bool {
+func NewMinHeap[T any](less func(a, b T) bool, values ...T) *Heap[T] {
+	comp := func(a, b T) bool {
 		return !less(a, b)
 	}
 	mh := &Heap[T]{
@@ -132,6 +137,10 @@ func NewMinHeap[T any](less func(a, b *T) bool, values ...T) *Heap[T] {
 	}
 	mh.Heapify()
 	return mh
+}
+
+func (h *Heap[T]) String() string {
+	return fmt.Sprintf("%v", h.slice)
 }
 
 func (h *Heap[T]) Heapify() {
@@ -143,6 +152,13 @@ func (h *Heap[T]) Len() int {
 		return 0
 	}
 	return len(h.slice)
+}
+
+func (h *Heap[T]) Peek() (pop T) {
+	if h == nil || len(h.slice) <= 0 {
+		return
+	}
+	return h.slice[0]
 }
 
 func (h *Heap[T]) Pop() (pop T) {
@@ -165,7 +181,7 @@ func (h *Heap[T]) Push(vs ...T) {
 		h.slice = append(h.slice, v)
 		childIdx := len(h.slice) - 1
 		parentIdx := parent(childIdx)
-		for h.less(&h.slice[parentIdx], &h.slice[childIdx]) {
+		for h.less(h.slice[parentIdx], h.slice[childIdx]) {
 			swap(h.slice, parentIdx, childIdx)
 			if parentIdx == 0 {
 				break

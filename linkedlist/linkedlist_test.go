@@ -16,7 +16,7 @@ func TestLinkedList(t *testing.T) {
 	}
 
 	newHead := NewElement(0)
-	newHead.Append(head)
+	newHead.Insert(head)
 	next = newHead
 	count := 0
 	for i := 0; next != nil; i++ {

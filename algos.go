@@ -6,12 +6,6 @@ func Empty[T any]() (e T) {
 	return
 }
 
-type AnyElement interface {
-	fmt.Stringer
-	GetData() any
-	SetData(data any) bool
-}
-
 // Element that contains any data
 type Element[T any] struct {
 	Data T

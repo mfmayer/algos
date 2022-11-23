@@ -38,8 +38,8 @@ func (n *Element[T]) SetNext(next *Element[T]) {
 	n.next = next
 }
 
-// Append or insert element (or linked list of elements) next to this one
-func (n *Element[T]) Append(element *Element[T]) {
+// Insert element (or linked list of elements) next to this one
+func (n *Element[T]) Insert(element *Element[T]) {
 	oldNext := n.next
 	n.next = element
 	for element.Next() != nil {

@@ -9,162 +9,76 @@ import (
 	"github.com/mfmayer/algos/stack"
 )
 
-type AnyLink interface {
-	fmt.Stringer
-	Node() AnyNode
-	Costs() int
+func lessLinkCost[T any](a, b Link[T]) bool {
+	return a.Costs() < b.Costs()
 }
 
-func lessLinkCost(a, b *AnyLink) bool {
-	return (*a).Costs() < (*b).Costs()
-}
-
-type NodeLink struct {
-	node AnyNode
-}
-
-func (nl *NodeLink) Node() AnyNode {
-	return nl.node
-}
-
-func (nl *NodeLink) Costs() int {
-	return 0
-}
-
-func (nl *NodeLink) String() string {
-	return fmt.Sprintf("%v(%v)", nl.node.GetData(), nl.Costs())
-}
-
-type NodeLinkWithCosts struct {
-	NodeLink
+type Link[T any] struct {
+	node  *Node[T]
 	costs int
 }
 
-func (nl *NodeLinkWithCosts) Node() AnyNode {
-	return nl.NodeLink.Node()
-}
-
-func (nl *NodeLinkWithCosts) Costs() int {
-	return nl.costs
-}
-
-func (nl *NodeLinkWithCosts) String() string {
-	return fmt.Sprintf("%v(%v)", nl.node.GetData(), nl.Costs())
-}
-
-type LinkToOption func(lto *linkToOption) *linkToOption
-
-type linkToOption struct {
-	nodes         []AnyNode
-	bidirectional bool
-	costs         int
-}
-
-func Nodes(nodes ...AnyNode) LinkToOption {
-	return func(lto *linkToOption) *linkToOption {
-		// Nodes() creates and returns new option
-		ret := &linkToOption{
-			nodes:         nodes,
-			bidirectional: false,
-			costs:         0,
-		}
-		return ret
+func Links[T any](nodes ...*Node[T]) []Link[T] {
+	links := make([]Link[T], len(nodes))
+	for i, n := range nodes {
+		links[i] = Link[T]{n, 0}
 	}
+	return links
 }
 
-func Bidirectional() LinkToOption {
-	return func(lto *linkToOption) *linkToOption {
-		lto.bidirectional = true
-		return lto
-	}
+func (l Link[T]) Node() *Node[T] {
+	return l.node
 }
 
-func BidirectionalWithCosts(costs int) LinkToOption {
-	return func(lto *linkToOption) *linkToOption {
-		lto.bidirectional = true
-		lto.costs = costs
-		return lto
-	}
+func (l Link[T]) Costs() int {
+	return l.costs
 }
 
-func WithCosts(costs int) LinkToOption {
-	return func(lto *linkToOption) *linkToOption {
-		lto.costs = costs
-		return lto
-	}
-}
-
-type AnyNode interface {
-	algos.AnyElement
-	Links() []AnyLink
-	LinkTo(...LinkToOption) error
-	// AddLink(...AnyLink)
+func (l Link[T]) String() string {
+	return fmt.Sprintf("%v(%v)", l.node.Data, l.costs)
 }
 
 // Node in a graph
 type Node[T any] struct {
 	*algos.Element[T]
-	links []AnyLink
+	links []Link[T]
 }
 
 // NewNode creates a new node for a graph
-func NewNode[T any](data T, links ...AnyLink) *Node[T] {
+func NewNode[T any](data T, links ...Link[T]) *Node[T] {
 	node := &Node[T]{
-		Element: &algos.Element[T]{Data: data},
-		links:   heap.HeapSort(links, lessLinkCost),
+		Element: algos.NewElement(data),
+		links:   heap.HeapSort(links, lessLinkCost[T]),
 	}
 	return node
 }
 
-func (n *Node[T]) Links() []AnyLink {
+func (n *Node[T]) Links() []Link[T] {
 	return n.links
 }
 
-func (n *Node[T]) LinkTo(options ...LinkToOption) (err error) {
-	ltos := map[*linkToOption]struct{}{}
-	var lto *linkToOption
-	for _, option := range options {
-		lto = option(lto)
-		ltos[lto] = struct{}{}
-	}
-	links := make([]AnyLink, 0, len(lto.nodes))
-	for lto, _ := range ltos {
-		for _, node := range lto.nodes {
-			var link AnyLink
-			switch lto.costs {
-			case 0:
-				link = &NodeLink{
-					node: node,
-				}
-			default:
-				link = &NodeLinkWithCosts{
-					NodeLink: NodeLink{
-						node: node,
-					},
-					costs: lto.costs,
-				}
-			}
-			links = append(links, link)
-			if lto.bidirectional {
-				node.LinkTo(Nodes(n), WithCosts(lto.costs))
-			}
-		}
-	}
+func (n *Node[T]) AddLinks(links ...Link[T]) {
 	n.links = append(n.links, links...)
-	n.links = heap.HeapSort(n.links, lessLinkCost)
-	return
+	n.links = heap.HeapSort(n.links, lessLinkCost[T])
+}
+
+func (n *Node[T]) AddLinksBidir(links ...Link[T]) {
+	n.AddLinks(links...)
+	for _, l := range links {
+		l.node.AddLinks(Link[T]{n, l.costs})
+	}
 }
 
 func (n *Node[T]) String() string {
-	return fmt.Sprintf("%v -> %v", n.GetData(), n.links)
+	return fmt.Sprintf("%v -> %v", n.Data, n.links)
 }
 
 // DepthFirstSearch calls visitFunc in a DFS (Depth First Search) Manner
-func (n *Node[T]) DepthFirstSearch(visitFunc func(AnyNode)) {
-	stack := stack.NewStack[AnyNode](n)
-	visited := map[AnyNode]struct{}{}
+func (n *Node[T]) DepthFirstSearch(visitFunc func(*Node[T])) {
+	stack := stack.NewStack(n)
+	visited := map[*Node[T]]struct{}{}
 
-	var next AnyNode
+	var next *Node[T]
 	for next = stack.Pop(); next != nil; next = stack.Pop() {
 		if _, alreadyVisited := visited[next]; alreadyVisited {
 			continue
@@ -181,11 +95,11 @@ func (n *Node[T]) DepthFirstSearch(visitFunc func(AnyNode)) {
 }
 
 // BreadthFirstSearch
-func (n *Node[T]) BreadthFirstSearch(visitFunc func(AnyNode)) {
-	queue := ringbuffer.NewRingBuffer[AnyNode](n)
-	visited := map[AnyNode]struct{}{}
+func (n *Node[T]) BreadthFirstSearch(visitFunc func(*Node[T])) {
+	queue := ringbuffer.NewRingBuffer(n)
+	visited := map[*Node[T]]struct{}{}
 
-	var next AnyNode
+	var next *Node[T]
 	for next = queue.Pop(); next != nil; next = queue.Pop() {
 		if _, alreadyVisited := visited[next]; alreadyVisited {
 			continue
