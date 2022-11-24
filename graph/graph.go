@@ -1,153 +1,60 @@
 package graph
 
-import (
-	"fmt"
+type LinkMap[T any] map[*Node[T]][]Link[T]
 
-	"github.com/mfmayer/algos"
-	"github.com/mfmayer/algos/heap"
-	"github.com/mfmayer/algos/ringbuffer"
-	"github.com/mfmayer/algos/stack"
-)
-
-func lessLinkCost[T any](a, b Link[T]) bool {
-	return a.Costs() < b.Costs()
-}
-
-type Link[T any] struct {
-	node  *Node[T]
-	costs int
-}
-
-func Links[T any](nodes ...*Node[T]) []Link[T] {
-	links := make([]Link[T], len(nodes))
-	for i, n := range nodes {
-		links[i] = Link[T]{n, 0}
+func LinkNodes[T any](bidirectional bool, linkMap LinkMap[T]) {
+	if bidirectional {
+		backLinkMap := LinkMap[T]{}
+		for node, links := range linkMap {
+			for _, link := range links {
+				backLinkMap[link.Node()] = append(backLinkMap[link.Node()], Link[T]{node, link.Costs()})
+			}
+		}
+		LinkNodes(false, backLinkMap)
 	}
-	return links
-}
-
-func (l Link[T]) Node() *Node[T] {
-	return l.node
-}
-
-func (l Link[T]) Costs() int {
-	return l.costs
-}
-
-func (l Link[T]) String() string {
-	return fmt.Sprintf("%v(%v)", l.node.Data, l.costs)
-}
-
-// Node in a graph
-type Node[T any] struct {
-	*algos.Element[T]
-	links []Link[T]
-}
-
-// NewNode creates a new node for a graph
-func NewNode[T any](data T, links ...Link[T]) *Node[T] {
-	node := &Node[T]{
-		Element: algos.NewElement(data),
-		links:   heap.HeapSort(links, lessLinkCost[T]),
-	}
-	return node
-}
-
-func (n *Node[T]) Links() []Link[T] {
-	return n.links
-}
-
-func (n *Node[T]) AddLinks(links ...Link[T]) {
-	n.links = append(n.links, links...)
-	n.links = heap.HeapSort(n.links, lessLinkCost[T])
-}
-
-func (n *Node[T]) AddLinksBidir(links ...Link[T]) {
-	n.AddLinks(links...)
-	for _, l := range links {
-		l.node.AddLinks(Link[T]{n, l.costs})
+	for node, links := range linkMap {
+		node.AddLinks(links...)
 	}
 }
 
-func (n *Node[T]) String() string {
-	return fmt.Sprintf("%v -> %v", n.Data, n.links)
-}
+////////////////////////
 
-// DepthFirstSearch calls visitFunc in a DFS (Depth First Search) Manner
-func (n *Node[T]) DepthFirstSearch(visitFunc func(*Node[T])) {
-	stack := stack.NewStack(n)
-	visited := map[*Node[T]]struct{}{}
+// type RouteLinks struct {
+// 	*linkedlist.Element[AnyLink]
+// }
 
-	var next *Node[T]
-	for next = stack.Pop(); next != nil; next = stack.Pop() {
-		if _, alreadyVisited := visited[next]; alreadyVisited {
-			continue
-		}
-		// push linked nodes in reverse order to the stack (to have links with lowest costs lying on top)
-		links := next.Links()
-		for i := len(links) - 1; i >= 0; i-- {
-			link := links[i]
-			stack.Push(link.Node())
-		}
-		visitFunc(next)
-		visited[next] = struct{}{}
-	}
-}
+// func NewRouteLink(link AnyLink) *RouteLinks {
+// 	return &RouteLinks{
+// 		Element: linkedlist.NewElement(link),
+// 	}
+// }
 
-// BreadthFirstSearch
-func (n *Node[T]) BreadthFirstSearch(visitFunc func(*Node[T])) {
-	queue := ringbuffer.NewRingBuffer(n)
-	visited := map[*Node[T]]struct{}{}
+// func (rl *RouteLinks) TotalCosts() (costs int) {
+// 	// var link linkedlist.AnyElement[AnyLink]
+// 	for link := rl; link != nil; link = rl.Next().(*RouteLinks) {
+// 		costs = costs + link.Data().Costs()
+// 	}
+// 	return
+// }
 
-	var next *Node[T]
-	for next = queue.Pop(); next != nil; next = queue.Pop() {
-		if _, alreadyVisited := visited[next]; alreadyVisited {
-			continue
-		}
-		for _, link := range next.Links() {
-			queue.Push(link.Node())
-		}
-		visitFunc(next)
-		visited[next] = struct{}{}
-	}
-}
-
-type Route[T any] []Link[T]
-
-func (r Route[T]) TotalCosts() int {
-	totalCosts := 0
-	for _, l := range r {
-		totalCosts = totalCosts + l.Costs()
-	}
-	return totalCosts
-}
-
-func (r Route[T]) LastNode() *Node[T] {
-	return r.LastLink().Node()
-}
-
-func (r Route[T]) LastLink() Link[T] {
-	return r[len(r)-1]
-}
-
-func (n *Node[T]) Dijkstra(destination *Node[T]) (route Route[T]) {
-	heap := heap.NewMinHeap(func(a, b Route[T]) bool { return a.TotalCosts() < b.TotalCosts() }, Route[T]{Link[T]{n, 0}})
-	visited := map[*Node[T]]struct{}{}
-	for route = heap.Pop(); route != nil; route = heap.Pop() {
-		link := route.LastLink()
-		node := link.Node()
-		if _, alreadyVisited := visited[node]; alreadyVisited {
-			continue
-		}
-		if node == destination {
-			return
-		}
-		for _, link := range node.Links() {
-			r := append(Route[T]{}, route...)
-			r = append(r, link)
-			heap.Push(r)
-		}
-		visited[node] = struct{}{}
-	}
-	return
-}
+// func (n *Node[T]) _Dijkstra(destination AnyNode) (route Route) {
+// 	heap := heap.NewMinHeap(func(a, b *RouteLinks) bool { return a.TotalCosts() < b.TotalCosts() }, NewRouteLink(n))
+// 	visited := map[AnyNode]struct{}{}
+// 	for route = heap.Pop(); route != nil; route = heap.Pop() {
+// 		link := route.LastLink()
+// 		node := link.Node()
+// 		if _, alreadyVisited := visited[node]; alreadyVisited {
+// 			continue
+// 		}
+// 		if node == destination {
+// 			return
+// 		}
+// 		for _, link := range node.Links() {
+// 			r := append(Route{}, route...)
+// 			r = append(r, link)
+// 			heap.Push(r)
+// 		}
+// 		visited[node] = struct{}{}
+// 	}
+// 	return
+// }
