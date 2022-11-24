@@ -18,10 +18,12 @@ func NewElement[T any](data T) *Element[T] {
 	}
 }
 
+// String returns element's string representation
 func (e *Element[T]) String() string {
 	return fmt.Sprintf("%v", e.GetData())
 }
 
+// GetData returns element's value
 func (e *Element[T]) GetData() any {
 	return e.Data
 }
