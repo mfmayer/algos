@@ -39,11 +39,19 @@ func (n *Element[T]) SetNext(next *Element[T]) {
 }
 
 // Insert element (or linked list of elements) next to this one
-func (n *Element[T]) Insert(element *Element[T]) {
+func (n *Element[T]) InsertAfter(element *Element[T]) {
 	oldNext := n.next
 	n.next = element
 	for element.Next() != nil {
 		element = element.Next()
 	}
 	element.SetNext(oldNext)
+}
+
+// Insert element (or linked list of elements) before to this one
+func (n *Element[T]) InsertBefore(element *Element[T]) {
+	for element.Next() != nil {
+		element = element.Next()
+	}
+	element.SetNext(n)
 }
