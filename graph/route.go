@@ -7,14 +7,14 @@ type Route[T any] []Link[T]
 func (r Route[T]) TotalCosts() int {
 	totalCosts := 0
 	for _, l := range r {
-		totalCosts = totalCosts + l.Costs()
+		totalCosts = totalCosts + l.Costs
 	}
 	return totalCosts
 }
 
 // LastNode returns route's last linked node
 func (r Route[T]) LastNode() *Node[T] {
-	return r.LastLink().Node()
+	return r.LastLink().Node
 }
 
 // LastLink returns route's last link

@@ -51,7 +51,7 @@ func (n *Node[T]) DepthFirstSearch(visitFunc func(*Node[T])) {
 		links := next.Links()
 		for i := len(links) - 1; i >= 0; i-- {
 			link := links[i]
-			stack.Push(link.Node())
+			stack.Push(link.Node)
 		}
 		visitFunc(next)
 		visited[next] = struct{}{}
@@ -71,7 +71,7 @@ func (n *Node[T]) BreadthFirstSearch(visitFunc func(*Node[T])) {
 		links := next.Links()
 		for i := len(links) - 1; i >= 0; i-- {
 			link := links[i]
-			queue.Push(link.Node())
+			queue.Push(link.Node)
 		}
 		visitFunc(next)
 		visited[next] = struct{}{}
@@ -79,12 +79,12 @@ func (n *Node[T]) BreadthFirstSearch(visitFunc func(*Node[T])) {
 }
 
 // Dijkstra algorithm to find shortest route from this node to destination
-func (n *Node[T]) Dijkstra(destination *Node[T]) (route Route[T]) {
+func (n *Node[T]) Dijkstra(destination *Node[T]) (route Route[T], steps int) {
 	return n.AStar(destination, nil)
 }
 
 // AStar (A*) algorithm to find shortest route from this node to destination using a heuristic function to search more targeted
-func (n *Node[T]) AStar(destination *Node[T], heuristic func(node *Node[T]) int) (route Route[T]) {
+func (n *Node[T]) AStar(destination *Node[T], heuristic func(node *Node[T]) int) (route Route[T], steps int) {
 
 	heap := heap.NewMinHeap(func(a, b Route[T]) bool {
 		aCosts := a.TotalCosts()
@@ -98,8 +98,9 @@ func (n *Node[T]) AStar(destination *Node[T], heuristic func(node *Node[T]) int)
 
 	visited := map[*Node[T]]struct{}{}
 	for route = heap.Pop(); route != nil; route = heap.Pop() {
+		steps++
 		link := route.LastLink()
-		node := link.Node()
+		node := link.Node
 		if _, alreadyVisited := visited[node]; alreadyVisited {
 			continue
 		}

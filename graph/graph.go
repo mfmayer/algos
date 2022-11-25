@@ -7,7 +7,7 @@ func LinkNodes[T any](bidirectional bool, linkMap LinkMap[T]) {
 		backLinkMap := LinkMap[T]{}
 		for node, links := range linkMap {
 			for _, link := range links {
-				backLinkMap[link.Node()] = append(backLinkMap[link.Node()], Link[T]{node, link.Costs()})
+				backLinkMap[link.Node] = append(backLinkMap[link.Node], Link[T]{node, link.Costs})
 			}
 		}
 		LinkNodes(false, backLinkMap)
@@ -17,7 +17,7 @@ func LinkNodes[T any](bidirectional bool, linkMap LinkMap[T]) {
 	}
 }
 
-////////////////////////
+// TODO: Rework Route representation
 
 // type RouteLinks struct {
 // 	*linkedlist.Element[AnyLink]
