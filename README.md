@@ -103,8 +103,8 @@ func Example() {
 func Example_graph_traversal() {
   // See this great video about graph traversal: https://youtu.be/TIbUeeksXcI
   //
-  //	    G_____A_____H
-  //	   /     / \   /
+  //      G_____A_____H
+  //     /     / \   /
   //    /     /   \ /
   //   F     C_____B
   //    \   /     /
